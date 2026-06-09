@@ -1,0 +1,2 @@
+C:\オンラインゲームフォルダ\サンプル\サンプル\01_接続\配布\Client\Project\x64\Debug\Project.exe
+C:\Users\student\OneDrive - ooharastudent\デスクトップ\OnlineGamesProject\Client\Project\x64\Debug\Project.exe
