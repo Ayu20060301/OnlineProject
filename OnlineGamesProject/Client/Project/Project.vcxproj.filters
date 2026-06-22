@@ -13,6 +13,18 @@
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{1d633d58-d8f4-46c4-bea5-29a9e895ecc6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\MyMath">
+      <UniqueIdentifier>{2e1e3500-e34e-4991-92eb-aa8af6db5b75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Component">
+      <UniqueIdentifier>{1f57a839-ea35-4bfe-b433-6577d93a91d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Scene">
+      <UniqueIdentifier>{8fe86c58-7529-4aeb-9190-ed402a0ee221}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Singleton">
+      <UniqueIdentifier>{9285f28f-c958-43f2-903e-8003baf022f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp">
@@ -29,6 +41,30 @@
     </ClCompile>
     <ClCompile Include="Source\Network\Host.cpp">
       <Filter>Source\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MyMath\MyMath.cpp">
+      <Filter>Source\MyMath</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Component\Controller2D.cpp">
+      <Filter>Source\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Component\Splite.cpp">
+      <Filter>Source\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Component\Transform.cpp">
+      <Filter>Source\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\PlayScene.cpp">
+      <Filter>Source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneBase.cpp">
+      <Filter>Source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\SceneManager.cpp">
+      <Filter>Source\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Scene\NetworkPlayScene.cpp">
+      <Filter>Source\Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +85,36 @@
     </ClInclude>
     <ClInclude Include="Source\Memory\Memory.h">
       <Filter>Source\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\MyMath\MyMath.h">
+      <Filter>Source\MyMath</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Component\Controller2D.h">
+      <Filter>Source\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Component\Splite.h">
+      <Filter>Source\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Component\Transform.h">
+      <Filter>Source\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\PlayScene.h">
+      <Filter>Source\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneBase.h">
+      <Filter>Source\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneManager.h">
+      <Filter>Source\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\SceneParameter.h">
+      <Filter>Source\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Scene\NetworkPlayScene.h">
+      <Filter>Source\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Singleton\Singleton.h">
+      <Filter>Source\Singleton</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

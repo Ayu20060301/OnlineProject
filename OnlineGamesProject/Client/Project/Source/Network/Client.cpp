@@ -6,79 +6,129 @@
 
 Client::Client()
 {
-	//初期化
-	m_PartnerHandle = 0;
-	m_NWState = NW_STATE_NONE;
-	m_IPAddress = {};
-	m_NameInput = nullptr;
-	m_MessageInput = nullptr;
-	m_SendChatData = {};
-	m_ChatData = {};
-
+	m_State = OFFLINE;
+	m_ServerHandle = 0;
 }
 
 Client::~Client()
 {
-	
+	Fin();
 }
 
-
-void Client::Init()
+void Client::Step()
 {
-	//キー文字列入力設定
-	m_NameInput = MakeUnique<InputString>();
-	m_MessageInput = MakeUnique<InputString>();
-
-	m_NameInput->SetPos(VGet(0.0f, 20.0f, 0.0f));
-	m_MessageInput->SetPos(VGet(0.0f, 20.0f, 0.0f));
-
-	//最初は名前入力
-	m_NameInput->Start();
-	m_NWState = NW_STATE_INPUT_NAME;
-}
-
-void Client::Update()
-{
-	switch (m_NWState)
+	switch (m_State)
 	{
-	case NW_STATE_INPUT_NAME: break;
-	case NW_STATE_WAITING: break;
-	case NW_STATE_INPUT_MESSAGE: break;
+	    case WAIT:     UpdateWaiting(); break;
+	    case ONLINE:   StepOnline();    break;
+
+		default: break;
 	}
 }
 
 void Client::Draw()
 {
-	if (m_NWState == NW_STATE_INPUT_NAME)
+	if (m_State == OFFLINE)
 	{
-		DrawFormatString(0, 0, GetColor(255, 255, 255), "ユーザー名を入力");
+		DrawFormatString(0, 0, GetColor(255, 255, 255), "オフライン");
 	}
-	else if (m_NWState == NW_STATE_WAITING)
+	else if (m_State == WAIT)
 	{
-
+		DrawFormatString(0, 0, GetColor(255, 255, 255), "接続中。。。");
 	}
-	else if (m_NWState == NW_STATE_INPUT_MESSAGE)
+	else if (m_State == ONLINE)
 	{
-		DrawFormatString(0, 0, GetColor(255, 255, 255), "メッセージを入力");
-		DrawFormatString(0, 0, GetColor(255, 255, 255), "Ctrl + Qで切断");
-		DrawFormatString(0, 0, GetColor(255, 255, 255), "接続先IPアドレス : %d%d%d%d", m_IPAddress.d1,m_IPAddress.d2,m_IPAddress.d3,m_IPAddress.d4);
+		DrawFormatString(0, 0, GetColor(255, 255, 255), "オンライン");
 	}
 
-	m_NameInput->Draw();
-	m_MessageInput->Draw();
-
+	DrawString(0, 880, "クライアント側", GetColor(255, 255, 255));
 }
 
 void Client::Fin()
 {
-	//状態が接続中移行であれば切断
-	if (m_NWState >= NW_STATE_WAITING)
+	if (m_State == ONLINE)
 	{
-
+		Disconnect();
 	}
 }
 
+/// <summary>
+/// サーバーに接続する
+/// </summary>
 void Client::Connect()
 {
+	IPDATA ip;
+	ip.d1 = 10;
+	ip.d2 = 50;
+	ip.d3 = 174;
+	ip.d4 = 100;
 
+	//指定したIPアドレスの端末に接続
+	m_ServerHandle = ConnectNetWork(ip, PORT_NUMBER);
+
+	//ハンドルが-1なら接続できてない
+	if (m_ServerHandle == -1)
+	{
+		m_State = OFFLINE;
+	}
+	else
+	{
+		//接続待ちへ
+		m_State = WAIT;
+	}
+}
+
+void Client::SendData(const void* data, unsigned int size) const
+{
+	if (m_State == ONLINE)
+	{
+		NetWorkSend(m_ServerHandle, data, size);
+	}
+}
+
+bool Client::CheckReceive()
+{
+	return GetNetWorkDataLength(m_ServerHandle) > 0;
+}
+
+void Client::ReceiveData(void* buffer, unsigned int size)
+{
+	if (m_State == ONLINE)
+	{
+		NetWorkRecv(m_ServerHandle, buffer, size);
+	}
+}
+
+/// <summary>
+/// サーバーから切断する
+/// </summary>
+void Client::Disconnect()
+{
+	//切断
+	CloseNetWork(m_ServerHandle);
+	m_ServerHandle = 0;
+	m_State = OFFLINE;
+}
+
+/// <summary>
+/// 接続待機中の更新処理
+/// </summary>
+void Client::UpdateWaiting()
+{
+	//接続できたかチェック
+	if (GetNetWorkAcceptState(m_ServerHandle))
+	{
+		//接続完了
+		m_State = ONLINE;
+	}
+}
+
+void Client::StepOnline()
+{
+	//Ctrl + Qで切断
+	if ((Input::IsInputKey(KEY_CTRL_L) || Input::IsInputKey(KEY_CTRL_R)) && Input::IsTriggerKey(KEY_Q))
+	{
+		//切断
+		Disconnect();
+	}
 }

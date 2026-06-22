@@ -20,6 +20,8 @@ enum InputKey
 	KEY_CTRL_L = (1 << 11),
 	KEY_CTRL_R = (1 << 12),
 	KEY_Q      = (1 << 13),
+	KEY_E      = (1 << 14),
+	KEY_X      = (1 << 15),
 };
 
 /// <summary>
