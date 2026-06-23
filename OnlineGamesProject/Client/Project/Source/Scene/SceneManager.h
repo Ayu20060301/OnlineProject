@@ -16,10 +16,6 @@ public:
 	void Step();
 	void Fin();
 
-	void  Init();
-	void  Step();
-	void  Fin();
-
 	void ChangeScene(SceneType type, float fadeOutSpeed = 0.0f);
 	void AddScene(SceneType type);
 

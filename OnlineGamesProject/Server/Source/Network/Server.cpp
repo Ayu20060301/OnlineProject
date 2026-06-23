@@ -1,11 +1,14 @@
 #include "DxLib.h"
 #include "Server.h"
 #include "NetworkCommonParam.h"
+#include <vector>
+
+
+using namespace Network;
 
 Server::Server()
 {
-	m_ClientData = {};
-	m_ChatData = {};
+	m_NetworkPlayerData = {};
 }
 
 Server::~Server()
@@ -36,21 +39,32 @@ void Server::Update()
 	{
 		RemoveUserData(lostHandle);
 	}
+
+	//データ受信処理
+	bool isUpdate = ReceiveData();
+
+	//データ更新があればクライアントに送信して同期
+	if (isUpdate)
+	{
+		SendAllTransformData();
+	}
 }
 
 void Server::Draw()
 {
+	/*
 	//まだ何も送られていなければ描画しない
 	if (strlen(m_ChatData.name) <= 0) return;
 
 	//最後に送られたメッセージ内容を描画
 	DrawFormatString(0, 0, GetColor(0, 255, 0), "%s", m_ChatData.name);
 	DrawFormatString(0, 20, GetColor(0, 255, 0), "%s", m_ChatData.message);
+	*/
 }
 
 void Server::Fin()
 {
-	m_ClientData.clear();
+	m_NetworkPlayerData.clear();
 }
 
 /// <summary>
@@ -59,14 +73,28 @@ void Server::Fin()
 /// <param name="handle">追加するユーザーのハンドル</param>
 void Server::AddUserData(int handle)
 {
-	ClientData user;
+	NetworkPlayerData player = {};
 
-	user.handle = handle;
+	player.id = (int)m_NetworkPlayerData.size();
+	player.client.handle = handle;
 	//接続してきたマシンのIPアドレスを得る
-	GetNetWorkIP(handle, &user.ip);
+	GetNetWorkIP(handle, &player.client.ip);
+
+	//初期設定
+	player.pos = { 100.0f,100.0f,0.0f };
+	player.scale = { 1.0f,1.0f,1.0f };
 
 	//ユーザー配列に追加
-	m_ClientData.push_back(user);
+	m_NetworkPlayerData.push_back(player);
+
+	//ログインデータを送信
+	SendLoginData(player);
+
+	//参加データを送信
+	SendJoinData(player);
+
+	//全員の座標を同期
+	SendAllTransformData();
 }
 
 /// <summary>
@@ -76,37 +104,101 @@ void Server::AddUserData(int handle)
 void Server::RemoveUserData(int handle)
 {
 	//イテレータを使って部分削除する
-	for (auto itr = m_ClientData.begin(); itr != m_ClientData.end(); itr++)
+	for (auto itr = m_NetworkPlayerData.begin(); itr != m_NetworkPlayerData.end(); itr++)
 	{
+		const NetworkPlayerData& player = (*itr);
 		//削除するユーザーをハンドルから検索
-		if ((*itr).handle == handle)
+		if (player.client.handle == handle)
 		{
+			//ログアウトをクライアントに送信
+			SendLogoutData(player.id);
+
 			//見つかったら削除して終了
-			m_ClientData.erase(itr);
+			m_NetworkPlayerData.erase(itr);
 			return;
 		}
 	}
 }
 
+void Server::SendLoginData(const NetworkPlayerData& loginPlayer)
+{
+	//通信データサイズ
+	size_t dataSize = sizeof(PacketHeader) + sizeof(LoginData);
+
+	//パケット + データを格納するバッファー
+	std::vector<uint8_t> buffer(dataSize);
+
+	PacketHeader header = {};
+	header.type = PacketType::LOGIN;
+	header.size = sizeof(LoginData);
+
+	//ID設定
+	LoginData data = {};
+	memset(&data, -1, sizeof(data));
+	int i = 0;
+	for (const auto& player : m_NetworkPlayerData)
+	{
+		data.playeID[i] = player.id;
+		data.selfID = player.id; //末尾にあるIDがログインしたクライアント自身のIDとなる
+		i++;
+	}
+
+	//パケットをバッファーに入れる
+	memcpy_s(buffer.data(), buffer.size(), &header, sizeof(PacketHeader));
+
+	//パケットの後ろにデータを入れる
+	memcpy_s(buffer.data() + sizeof(PacketHeader), buffer.size() - sizeof(PacketHeader), &data, sizeof(LoginData));
+
+	//ログインするクライアントに送信する
+	NetWorkSend(loginPlayer.client.handle, reinterpret_cast<char*>(buffer.data()), (int)buffer.size());
+}
+
+void Server::SendJoinData(const NetworkPlayerData& joinPlayer)
+{
+}
+
+void Server::SendLogoutData(int id)
+{
+}
+
+void Server::SendAllTransformData()
+{
+}
+
 /// <summary>
 /// データ受信
 /// </summary>
-void Server::ReceiveData()
+bool Server::ReceiveData()
 {
+	bool isUpdate = false;
+
 	//接続しているクライアント全員分処理する
-	for (ClientData client : m_ClientData)
+	for (const NetworkPlayerData& player : m_NetworkPlayerData)
 	{
-		//クライアント側から送られたデータのサイズを取得
-		int dataLength = GetNetWorkDataLength(client.handle);
+		//クライアントから送られたデータのサイズを取得
+		int dataLength = GetNetWorkDataLength(player.client.handle);
 
 		//データが送られてきたかチェック
 		if (dataLength > 0)
 		{
-			//受信前にデータクリア
-			m_ChatData = {};
+			//ヘッダーのみを受信
+			PacketHeader header = {};
+			NetWorkRecv(player.client.handle, reinterpret_cast<char*>(&header), sizeof(header));
 
-			//受信
-			NetWorkRecv(client.handle, &m_ChatData, sizeof(m_ChatData));
+			//パケットごとの処理
+			switch (header.type)
+			{
+			case PacketType::POS:  SyncPos(player.client.handle); break;
+			}
+
+			//更新された
+			isUpdate = true;
 		}
 	}
+
+	return isUpdate;
+}
+
+void Server::SyncPos(int handle)
+{
 }

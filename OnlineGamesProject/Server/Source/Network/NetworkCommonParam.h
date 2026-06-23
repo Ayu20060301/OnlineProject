@@ -6,25 +6,74 @@
 // ポート番号は49152～65535が好ましい
 #define PORT_NUMBER 50000
 
-//通信できるユーザー名のMAXサイズ(全角5文字まで)
-constexpr int NETWORK_USER_NAME_MAX = 10;
+//プレイヤー最大人数
+#define NETWORK_PLAYER_MAX 4
 
-//文字列の長さは文字数+終端文字
-constexpr int NETWORK_USER_NAME_BUFFER_MAX = NETWORK_USER_NAME_MAX + 1;
-
-//通信できる文字列のMAXサイズ
-constexpr int NETWORK_MESSAGE_MAX = 40;
-
-//文字列の長さは文字数+終端文字
-constexpr int NETWORK_MESSAGE_BUFFER_MAX = NETWORK_MESSAGE_MAX + 1;
-
-
-//クライアントが送信するデータ
-struct ChatData
+namespace Network
 {
-	//ユーザー名
-	char name[NETWORK_USER_NAME_BUFFER_MAX];
+	//通信できるユーザー名のMAXサイズ(全角5文字まで)
+	constexpr int NETWORK_USER_NAME_MAX = 10;
 
-	//文字数(全角30文字まで)
-	char message[NETWORK_USER_NAME_BUFFER_MAX];
-};
+	//文字列の長さは文字数+終端文字
+	constexpr int NETWORK_USER_NAME_BUFFER_MAX = NETWORK_USER_NAME_MAX + 1;
+
+	//通信できる文字列のMAXサイズ
+	constexpr int NETWORK_MESSAGE_MAX = 40;
+
+	//文字列の長さは文字数+終端文字
+	constexpr int NETWORK_MESSAGE_BUFFER_MAX = NETWORK_MESSAGE_MAX + 1;
+
+	//パケットの種類(符号なし8ビットで扱う)
+	enum class PacketType : uint8_t
+	{
+		LOGIN,
+		JOIN,
+		LOGOUT,
+		POS,
+		ROT,
+		SCALE,
+		TRANSFORM,
+		ALL_TRANSFORM
+	};
+
+	//全通信に使用するパケットデータ
+	struct PacketHeader
+	{
+		PacketType type; //種類
+		uint16_t size; //データサイズ(符号なし16ビット)
+	};
+
+	//プレイヤーログインデータ
+	struct LoginData
+	{
+		int selfID;
+		int playeID[NETWORK_PLAYER_MAX];
+	};
+
+	//他プレイヤー参加データ
+	struct JoinData
+	{
+		int playerID;
+	};
+
+	//プレイヤーログアウトデータ
+	struct LogoutData
+	{
+		int playerID;
+	};
+
+	//プレイヤーの座標データ
+	struct PosData
+	{
+		int playerID;
+		VECTOR pos;
+	};
+
+	//全プレイヤーのトランスフォームデータ
+	struct AllTransformData
+	{
+		VECTOR pos[NETWORK_PLAYER_MAX];
+		VECTOR rot[NETWORK_PLAYER_MAX];
+		VECTOR scale[NETWORK_PLAYER_MAX];
+	};
+}
