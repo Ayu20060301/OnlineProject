@@ -64,4 +64,19 @@ namespace Network
 	{
 		int playerID;
 	};
+
+	//プレイヤーの座標データ
+	struct PosData
+	{
+		int playerID;
+		VECTOR pos;
+	};
+
+	//全プレイヤーのトランスフォームデータ
+	struct AllTransformData
+	{
+		VECTOR pos{ NETWORK_PLAYER_MAX };
+		VECTOR rot{ NETWORK_PLAYER_MAX };
+		VECTOR scale{ NETWORK_PLAYER_MAX };
+	};
 }

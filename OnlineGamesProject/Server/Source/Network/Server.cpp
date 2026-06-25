@@ -155,14 +155,99 @@ void Server::SendLoginData(const NetworkPlayerData& loginPlayer)
 
 void Server::SendJoinData(const NetworkPlayerData& joinPlayer)
 {
+	//通信データサイズ
+	size_t dataSize = sizeof(PacketHeader) + sizeof(JoinData);
+
+	//パケット　＋　データを格納するバッファー
+	std::vector<uint8_t> buffer(dataSize);
+
+	PacketHeader header = {};
+	header.type = PacketType::JOIN;
+	header.size = sizeof(JoinData);
+
+	//ID設定
+	JoinData data = {};
+	data.playerID = joinPlayer.id;
+
+	//パケットをバッファーに入れる
+	memcpy_s(buffer.data(), buffer.size(), &header, sizeof(PacketHeader));
+
+	//パケットの後ろにデータを入れる
+	memcpy_s(buffer.data() + sizeof(PacketHeader), buffer.size() - sizeof(PacketHeader), &data, sizeof(JoinData));
+
+	//参加するクライアント以外の全クライアントに送信する
+	for (const NetworkPlayerData& player : m_NetworkPlayerData)
+	{
+		if (player.id != joinPlayer.id)
+		{
+			NetWorkSend(player.client.handle, reinterpret_cast<char*>(buffer.data()), (int)buffer.size());
+		}
+	}
 }
 
 void Server::SendLogoutData(int id)
 {
+	//通信データサイズ
+	size_t dataSize = sizeof(PacketHeader) + sizeof(LogoutData);
+
+	//パケット　＋　データを格納するバッファー
+	std::vector<uint8_t> buffer(dataSize);
+
+	PacketHeader header = {};
+	header.type = PacketType::LOGOUT;
+	header.size = sizeof(LogoutData);
+
+	//ID設定
+	LogoutData data = {};
+	data.playerID = id;
+
+	//パケットをバッファーに入れる
+	memcpy_s(buffer.data(), buffer.size(), &header, sizeof(PacketHeader));
+
+	//パケットの後ろにデータを入れる
+	memcpy_s(buffer.data() + sizeof(PacketHeader), buffer.size() - sizeof(PacketHeader), &data, sizeof(LogoutData));
+
+	//参加するクライアント以外の全クライアントに送信する
+	for (const NetworkPlayerData& player : m_NetworkPlayerData)
+	{
+			NetWorkSend(player.client.handle, reinterpret_cast<char*>(buffer.data()), (int)buffer.size());
+	}
 }
 
 void Server::SendAllTransformData()
 {
+	//通信データサイズ
+	size_t dataSize = sizeof(PacketHeader) + sizeof(AllTransformData);
+
+	//パケット　＋　データを格納するバッファー
+	std::vector<uint8_t> buffer(dataSize);
+
+	PacketHeader header = {};
+	header.type = PacketType::ALL_TRANSFORM;
+	header.size = sizeof(AllTransformData);
+
+	//データ設定
+	AllTransformData data = {};
+	int i = 0;
+	for (const auto& playerData : m_NetworkPlayerData)
+	{
+		data.pos[i] = playerData.pos;
+		data.rot[i] = playerData.rot;
+		data.scale[i] = playerData.scale;
+		i++;
+	}
+
+	//パケットをバッファーに入れる
+	memcpy_s(buffer.data(), buffer.size(), &header, sizeof(PacketHeader));
+
+	//パケットの後ろにデータを入れる
+	memcpy_s(buffer.data() + sizeof(PacketHeader), buffer.size() - sizeof(PacketHeader), &data, sizeof(AllTransformData));
+
+	//全クライアントに送信する
+	for (const NetworkPlayerData& player : m_NetworkPlayerData)
+	{
+		NetWorkSend(player.client.handle, reinterpret_cast<char*>(buffer.data()), (int)buffer.size());
+	}
 }
 
 /// <summary>
@@ -199,6 +284,23 @@ bool Server::ReceiveData()
 	return isUpdate;
 }
 
+/// <summary>
+/// 座標の同期
+/// </summary>
+/// <param name="handle">受信したクライアントのハンドル</param>
 void Server::SyncPos(int handle)
 {
+	//座標データの受信
+	Network::PosData data = {};
+	NetWorkRecv(handle, &data, sizeof(data));
+
+	for (NetworkPlayerData& player : m_NetworkPlayerData)
+	{
+		//IDが一致したプレイヤーの座標を更新する
+		if (player.id == data.playerID)
+		{
+			player.pos = data.pos;
+			break;
+		}
+	}
 }
